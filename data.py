@@ -74,9 +74,9 @@ class ImgTest(data.Dataset):
         lr_vol = sitk.GetArrayFromImage(sitk.ReadImage(in_path_lr))
         self.img_lr.append(lr_vol)
         for img_lr in self.img_lr:
-            temp_size = np.array(img_lr.shape).astype(float)
-            temp_size *= scale
-            temp_size = list(temp_size.astype(int))
+            temp_size = list(img_lr.shape)  # [39, 240, 240]
+            # z축(index=0)만 scale 적용
+            temp_size[aniso_axis] = int(temp_size[aniso_axis] * scale)  # [156, 240, 240]
             self.xyz_hr.append(utils.make_coord(temp_size, flatten=True))
 
     def __len__(self):
@@ -86,9 +86,9 @@ class ImgTest(data.Dataset):
         return self.img_lr[item], self.xyz_hr[item]
 
 
-def loader_test(in_path_lr, scale):
+def loader_test(in_path_lr, scale, aniso_axis=0):
     return data.DataLoader(
-        dataset=ImgTest(in_path_lr=in_path_lr, scale=scale),
+        dataset=ImgTest(in_path_lr=in_path_lr, scale=scale, aniso_axis=aniso_axis),
         batch_size=1,
         shuffle=False
     )

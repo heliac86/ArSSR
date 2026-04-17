@@ -67,16 +67,22 @@ def loader_train(in_path_hr, batch_size, sample_size, is_train):
 # -----------------------
 
 class ImgTest(data.Dataset):
-    def __init__(self, in_path_lr, scale):
+    def __init__(self, in_path_lr, scale, aniso_axis=0):
+        """
+        :param in_path_lr: the path of LR input image
+        :param scale: up-sampling scale for the target axis
+        :param aniso_axis: axis index to upsample (array order: z=0, y=1, x=2)
+                           SimpleITK GetArrayFromImage returns (z, y, x) order
+        """
         self.img_lr = []
         self.xyz_hr = []
         # load lr image
         lr_vol = sitk.GetArrayFromImage(sitk.ReadImage(in_path_lr))
         self.img_lr.append(lr_vol)
         for img_lr in self.img_lr:
-            temp_size = list(img_lr.shape)  # [39, 240, 240]
-            # z축(index=0)만 scale 적용
-            temp_size[aniso_axis] = int(temp_size[aniso_axis] * scale)  # [156, 240, 240]
+            temp_size = list(img_lr.shape)          # e.g. [39, 240, 240]
+            # apply scale only to the target axis
+            temp_size[aniso_axis] = int(temp_size[aniso_axis] * scale)  # e.g. [156, 240, 240]
             self.xyz_hr.append(utils.make_coord(temp_size, flatten=True))
 
     def __len__(self):

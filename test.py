@@ -34,7 +34,11 @@ if __name__ == '__main__':
     parser.add_argument('-pre_trained_model', type=str, default='./pre_trained_models/ArSSR_RDN.pkl',
                         dest='pre_trained_model', help='the file path of LR input image for testing')
     parser.add_argument('-aniso_axis', type=int, default=0, dest='aniso_axis',
-                    help='업샘플링할 축 (배열 기준, z축=0 default)')
+                        help='업샘플링할 축 (배열 기준, z축=0 default)')
+    parser.add_argument('-target_size', type=int, default=-1, dest='target_size',
+                        help='복원 후 aniso_axis 방향 최종 슬라이스 수. -1이면 trim 없음')
+    parser.add_argument('-gt_path', type=str, default='', dest='gt_path',
+                        help='GT 이미지 폴더 경로 (Origin 복사용)')
 
 
     # about GPU
@@ -63,6 +67,8 @@ if __name__ == '__main__':
     output_path = args.output_path
     scale = args.scale
     aniso_axis = args.aniso_axis
+    target_size = args.target_size
+    gt_path = args.gt_path
 
     # -----------------------
     # model

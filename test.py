@@ -33,6 +33,9 @@ if __name__ == '__main__':
                         help='the dimension size of the feature vector (default=128)')
     parser.add_argument('-pre_trained_model', type=str, default='./pre_trained_models/ArSSR_RDN.pkl',
                         dest='pre_trained_model', help='the file path of LR input image for testing')
+    parser.add_argument('-aniso_axis', type=int, default=0, dest='aniso_axis',
+                    help='업샘플링할 축 (배열 기준, z축=0 default)')
+
 
     # about GPU
     parser.add_argument('-is_gpu', type=int, default=1, dest='is_gpu',
@@ -59,6 +62,7 @@ if __name__ == '__main__':
     input_path = args.input_path
     output_path = args.output_path
     scale = args.scale
+    aniso_axis = args.aniso_axis
 
     # -----------------------
     # model
@@ -78,15 +82,21 @@ if __name__ == '__main__':
     # -----------------------
     filenames = os.listdir(input_path)
     for f in tqdm(filenames):
-        test_loader = data.loader_test(in_path_lr=r'{}/{}'.format(input_path, f), scale=scale)
+        test_loader = data.loader_test(in_path_lr=r'{}/{}'.format(input_path, f),
+                                       scale=scale,
+                                       aniso_axis=aniso_axis)
 
         # read the dimension size and spacing of LR input image
         lr = SimpleITK.ReadImage(r'{}/{}'.format(input_path, f))
         lr_size = SimpleITK.GetArrayFromImage(lr).shape
         lr_spacing = lr.GetSpacing()
         # then compute the dimension size and spacing of the HR image
-        hr_size = (np.array(lr_size) * scale).astype(int)
-        hr_spacing = np.array(lr_spacing) / scale
+        hr_size = list(lr_size)                                   # [39, 240, 240]
+        hr_size[aniso_axis] = int(lr_size[aniso_axis] * scale)    # [156, 240, 240]
+        hr_size = np.array(hr_size)
+        hr_spacing = np.array(lr_spacing)                          # (x_sp, y_sp, z_sp)
+        spacing_axis = 2 - aniso_axis                              # 배열 axis 0 → spacing index 2
+        hr_spacing[spacing_axis] = lr_spacing[spacing_axis] / scale
 
         ArSSR.eval()
         with torch.no_grad():

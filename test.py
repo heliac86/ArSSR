@@ -112,6 +112,11 @@ if __name__ == '__main__':
                             j * hr_size[1] * hr_size[2] + hr_size[1] * hr_size[2]] = \
                         img_pre_path.cpu().detach().numpy().reshape(hr_size[1] * hr_size[2], 1)
                 img_pre = img_pre.reshape((hr_size[0], hr_size[1], hr_size[2]))
+        # trim anisotropic axis to match original HR size (e.g. 156 -> 155)
+        original_hr_size = int(lr_size[aniso_axis] * scale)
+        if img_pre.shape[aniso_axis] > original_hr_size:
+            img_pre = np.take(img_pre, indices=range(original_hr_size), axis=aniso_axis)
+
         # save file
         utils.write_img(vol=img_pre,
                         ref_path=r'{}/{}'.format(input_path, f),

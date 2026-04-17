@@ -118,14 +118,16 @@ if __name__ == '__main__':
                             j * hr_size[1] * hr_size[2] + hr_size[1] * hr_size[2]] = \
                         img_pre_path.cpu().detach().numpy().reshape(hr_size[1] * hr_size[2], 1)
                 img_pre = img_pre.reshape((hr_size[0], hr_size[1], hr_size[2]))
-        # trim anisotropic axis to match original HR size (e.g. 156 -> 155)
-        original_hr_size = int(lr_size[aniso_axis] * scale)
-        if img_pre.shape[aniso_axis] > original_hr_size:
-            img_pre = np.take(img_pre, indices=range(original_hr_size), axis=aniso_axis)
+        # trim aniso_axis to target_size if specified (e.g. 156 -> 155 for BraTS GT matching)
+        if target_size > 0 and img_pre.shape[aniso_axis] > target_size:
+            img_pre = np.take(img_pre, indices=range(target_size), axis=aniso_axis)
 
+        # use GT as ref to copy Direction/Origin (avoids -0.0 origin issue)
+        ref = r'{}/{}'.format(gt_path, f) if gt_path else r'{}/{}'.format(input_path, f)
+        
         # save file
         utils.write_img(vol=img_pre,
-                        ref_path=r'{}/{}'.format(input_path, f),
+                        ref_path=ref,
                         out_path=r'{}/ArSSR_{}_recon_{}x_{}'.format(output_path, encoder_name,
                                                                     str(scale).replace('.', 'd'), f),
                         new_spacing=hr_spacing)
